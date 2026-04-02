@@ -9,35 +9,47 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
    
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        h2 { text-align: center; color: #333; }
-        label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
-        
-        button { background-color: #1a73e8; color: white; border: none; font-weight: bold; margin-top: 15px; cursor: pointer; }
-        .btn-pdf { background-color: #555; margin-top: 10px; }
-        
-        .total { font-size: 1.5em; font-weight: bold; text-align: center; margin: 20px 0; color: #d93025; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; color: black; }
-        th, td { border: 1px solid #eee; padding: 8px; text-align: left; }
-        th { background-color: #f8f9fa; }
+    body { font-family: 'Segoe UI', sans-serif; background-color: #fdf8f5; padding: 20px; display: flex; justify-content: center; }
+    
+    .container { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(255, 140, 0, 0.1); width: 100%; max-width: 450px; border-top: 5px solid #ff8c00; }
+    
+    h2 { text-align: center; color: #e65100; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+    
+    label { display: block; margin-top: 12px; font-weight: bold; color: #ef6c00; font-size: 14px; }
+    
+    input, select, button { width: 100%; padding: 14px; margin-top: 5px; border-radius: 10px; border: 1px solid #ffd180; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
+    
+    input:focus, select:focus { outline: none; border-color: #ff8c00; box-shadow: 0 0 8px rgba(255, 140, 0, 0.2); }
+    
+    /* Botão Principal Alaranjado */
+    button { 
+        background: linear-gradient(45deg, #ff8c00, #ffb300); 
+        color: white; 
+        border: none; 
+        font-weight: bold; 
+        margin-top: 20px; 
+        cursor: pointer; 
+        box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+    }
+    
+    button:hover { background: linear-gradient(45deg, #e65100, #ff8c00); transform: translateY(-1px); }
+    button:active { transform: translateY(1px); }
 
-        #area-report {page-break-inside: avoid;}
-        canvas {page-break-inside: avoid;}
-   
-        #pagina1, #pagina2 {
-        width: 100%;
-        page-break-inside: avoid;
-        }
-    </style>
+    /* Botão do PDF mais discreto mas combinando */
+    .btn-pdf { background: #5d4037; margin-top: 15px; opacity: 0.9; }
+    
+    .total { font-size: 1.6em; font-weight: bold; text-align: center; margin: 25px 0; color: #bf360c; background: #fff3e0; padding: 10px; border-radius: 8px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+    th { background-color: #ffe0b2; color: #e65100; padding: 10px; text-align: left; }
+    td { border-bottom: 1px solid #ffe0b2; padding: 10px; color: #333; }
+</style>
 </head>
 <body>
 
 <div class="container">
     <div id="area-registo">
-        <h2>DAILY EXPENSES</h2>
+        <h2>DAILY EXPENSES 💸 </h2>
         
         <label>Configuração: Credit Card Closing Date</label>
         <input type="number" id="diaFecho" value="28" min="1" max="31" style="background: #eef1f7;">
