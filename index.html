@@ -51,27 +51,27 @@
     <div id="area-registo">
         <h2>DAILY EXPENSES 💸 </h2>
         
-        <label>Configuração: Credit Card Closing Date</label>
+        <label>Credit Card Closing Date</label>
         <input type="number" id="diaFecho" value="28" min="1" max="31" style="background: #eef1f7;">
         
-        <label>Data da Compra</label>
+        <label>Date</label>
         <input type="date" id="data">
         
-        <label>Valor Total (R$)</label>
+        <label>Price (R$)</label>
         <input type="number" id="valor" step="0.01" placeholder="0.00">
         
-        <label>Categoria</label>
+        <label>Category</label>
         <select id="categoria" onchange="verificarParcelas()">
             <option value="General">General</option>
             <option value="Credit Card">Credit Card</option>
         </select>
     
         <div id="campoParcelas" style="display:none;">
-            <label>Número de Parcelas</label>
+            <label>Number of Installments</label>
             <input type="number" id="numParcelas" value="1" min="1">
         </div>
         
-        <label>Descrição</label>
+        <label>Description</label>
         <input type="text" id="descricao" placeholder="O que comprou?">
         
         <button id="btnAdicionar" onclick="adicionarDespesa()">Adicionar Despesa</button>
