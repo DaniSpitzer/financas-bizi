@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finanças Hedy</title>
+    <title>Daily Expenses</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
@@ -41,20 +41,27 @@
 
 <div class="container">
     <div id="area-registo">
-        <h2>Daily expenses</h2>
+        <h2>DAILY EXPENSES</h2>
         
-        <label>Data</label>
+        <label>Configuração: Dia de Fecho do Cartão</label>
+        <input type="number" id="diaFecho" value="28" min="1" max="31" style="background: #eef1f7;">
+        
+        <label>Data da Compra</label>
         <input type="date" id="data">
         
-        <label>Valor (R$)</label>
+        <label>Valor Total (R$)</label>
         <input type="number" id="valor" step="0.01" placeholder="0.00">
         
         <label>Categoria</label>
-        <select id="categoria">
-            <option value="Credit card 1">Credit card 1</option>
-            <option value="Credit card 2">Credit card 2</option>
-            <option value="General</option>
+        <select id="categoria" onchange="verificarParcelas()">
+            <option value="General">General</option>
+            <option value="Credit Card">Credit Card</option>
         </select>
+    
+        <div id="campoParcelas" style="display:none;">
+            <label>Número de Parcelas</label>
+            <input type="number" id="numParcelas" value="1" min="1">
+        </div>
         
         <label>Descrição</label>
         <input type="text" id="descricao" placeholder="O que comprou?">
@@ -143,30 +150,65 @@ function carregarDadosFiltrados() {
     atualizarInterface(despesasFiltradas);
 }
 
+function verificarParcelas() {
+    const cat = document.getElementById('categoria').value;
+    document.getElementById('campoParcelas').style.display = (cat === "Credit Card") ? "block" : "none";
+}
+
 async function adicionarDespesa() {
     const btn = document.getElementById('btnAdicionar');
-    const data = document.getElementById('data').value;
-    const valor = parseFloat(document.getElementById('valor').value);
+    const dataCompra = document.getElementById('data').value;
+    const valorTotal = parseFloat(document.getElementById('valor').value);
     const categoria = document.getElementById('categoria').value;
     const descricao = document.getElementById('descricao').value;
+    const diaFecho = parseInt(document.getElementById('diaFecho').value);
+    const numParcelas = (categoria === "Credit Card") ? parseInt(document.getElementById('numParcelas').value) : 1;
 
-    if (!data || isNaN(valor)) return alert("Preencha data e valor!");
+    if (!dataCompra || isNaN(valorTotal)) return alert("Preencha data e valor!");
 
-    btn.innerText = "Carregando...";
+    btn.innerText = "Processando parcelas...";
     btn.disabled = true;
 
+    // 1. Decidir o mês inicial com base no dia de fecho
+    let dataObjeto = new Date(dataCompra);
+    let diaDaCompra = dataObjeto.getDate();
+    
+    // Se a compra foi no dia do fecho ou depois, joga para o mês seguinte
+    if (diaDaCompra >= diaFecho) {
+        dataObjeto.setMonth(dataObjeto.getMonth() + 1);
+    }
+
+    const valorParcela = valorTotal / numParcelas;
+
     try {
-        await fetch(APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({ data, valor, categoria, descricao })
-        });
+        // 2. Loop para adicionar cada parcela como uma linha individual no Sheets
+        for (let i = 0; i < numParcelas; i++) {
+            let dataParcela = new Date(dataObjeto);
+            dataParcela.setMonth(dataObjeto.getMonth() + i);
+            
+            // Formatar data para YYYY-MM-DD
+            let dataFormatada = dataParcela.toISOString().split('T')[0];
+            
+            let descComParcela = numParcelas > 1 ? `${descricao} (${i + 1}/${numParcelas})` : descricao;
+
+            await fetch(APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ 
+                    data: dataFormatada, 
+                    valor: valorParcela, 
+                    categoria, 
+                    descricao: descComParcela 
+                })
+            });
+        }
 
         setTimeout(() => {
             btn.innerText = "Adicionar Despesa";
             btn.disabled = false;
             document.getElementById('valor').value = '';
             document.getElementById('descricao').value = '';
+            document.getElementById('numParcelas').value = '1';
             carregarDados();
         }, 1500);
     } catch (e) { alert("Erro!"); btn.disabled = false; }
