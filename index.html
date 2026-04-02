@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanças Hedy</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+   
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { text-align: center; color: #333; }
+        label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
+        
+        button { background-color: #1a73e8; color: white; border: none; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .btn-pdf { background-color: #555; margin-top: 10px; }
+        
+        .total { font-size: 1.5em; font-weight: bold; text-align: center; margin: 20px 0; color: #d93025; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; color: black; }
+        th, td { border: 1px solid #eee; padding: 8px; text-align: left; }
+        th { background-color: #f8f9fa; }
+
+        #area-report {page-break-inside: avoid;}
+        canvas {page-break-inside: avoid;}
+   
+        #pagina1, #pagina2 {
+        width: 100%;
+        page-break-inside: avoid;
+        }
+
+        #meuGrafico {
+          max-height: 220px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="area-registo">
+        <h2>Despesas da Hedy</h2>
+        
+        <label>Data</label>
+        <input type="date" id="data">
+        
+        <label>Valor (R$)</label>
+        <input type="number" id="valor" step="0.01" placeholder="0.00">
+        
+        <label>Categoria</label>
+        <select id="categoria">
+            <option value="Alimentação">Alimentação</option>
+            <option value="Saúde/Farmácia">Saúde/Farmácia</option>
+            <option value="Casa/Contas">Casa/Contas</option>
+            <option value="Cuidadora">Cuidadora</option>
+            <option value="Limpeza/Manutenção">Serviços da casa/Limpeza/Jardim/Manutenção</option>
+            <option value="Saques">Saques</option>
+            <option value="Outros">Outros</option>
+        </select>
+        
+        <label>Descrição</label>
+        <input type="text" id="descricao" placeholder="O que comprou?">
+        
+        <button id="btnAdicionar" onclick="adicionarDespesa()">Adicionar Despesa</button>
+    </div>
+
+    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+    <div style="margin-bottom: 20px; text-align: center;">
+        <label for="filtroMes">Ver outro mês:</label>
+        <input type="month" id="filtroMes" onchange="carregarDadosFiltrados()">
+    </div>
+
+    <div id="area-report">
+
+    <!-- PAGINA 1 -->
+    <div id="pagina1">
+        <h2 style="text-align:center;">Relatório de Despesas</h2>
+        <h3 id="titulo-report" style="text-align:center;"></h3>
+
+        <div class="total" id="valorTotal">Total: R$ 0.00</div>
+
+        <canvas id="meuGrafico"></canvas>
+    </div>
+    <h3 style="margin-top:25px;">Total por categoria</h3>
+    <table id="tabelaCategorias">
+        <thead>
+            <tr>
+                <th>Categoria</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- PAGINA 2 -->
+    <div id="pagina2">
+        <h3 style="margin-top:40px;">Lista de Despesas</h3>
+
+        <table id="tabelaDespesas">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
+
+    <button class="btn-pdf" onclick="gerarPDF()">📥 Baixar Relatório PDF</button>
+</div>
+
+<script>
+const APP_URL = "https://script.google.com/macros/s/AKfycbwu8BrZb72UVrCnBSARtPze90salLnEy7opND4SUWHiDxj75-XItcZEsD6SmQp8T-olHw/exec";
+let todasAsDespesas = [];
+let meuGrafico;
+
+async function carregarDados() {
+    try {
+        const response = await fetch(APP_URL);
+        todasAsDespesas = await response.json();
+        carregarDadosFiltrados();
+    } catch (e) { console.log("Erro ao carregar:", e); }
+}
+
+function carregarDadosFiltrados() {
+    const selector = document.getElementById('filtroMes').value; 
+    if (!selector) return;
+
+    const [anoAlvo, mesAlvo] = selector.split("-");
+    
+    const despesasFiltradas = todasAsDespesas.filter(d => {
+        const dataPura = d.data.toString().split('T')[0]; 
+        const [anoD, mesD] = dataPura.split("-");
+        return anoD === anoAlvo && mesD === mesAlvo;
+    });
+
+    const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    document.getElementById('titulo-report').innerText = "Relatório de " + meses[parseInt(mesAlvo) - 1];
+
+    atualizarInterface(despesasFiltradas);
+}
+
+async function adicionarDespesa() {
+    const btn = document.getElementById('btnAdicionar');
+    const data = document.getElementById('data').value;
+    const valor = parseFloat(document.getElementById('valor').value);
+    const categoria = document.getElementById('categoria').value;
+    const descricao = document.getElementById('descricao').value;
+
+    if (!data || isNaN(valor)) return alert("Preencha data e valor!");
+
+    btn.innerText = "Carregando...";
+    btn.disabled = true;
+
+    try {
+        await fetch(APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ data, valor, categoria, descricao })
+        });
+
+        setTimeout(() => {
+            btn.innerText = "Adicionar Despesa";
+            btn.disabled = false;
+            document.getElementById('valor').value = '';
+            document.getElementById('descricao').value = '';
+            carregarDados();
+        }, 1500);
+    } catch (e) { alert("Erro!"); btn.disabled = false; }
+}
+
+function atualizarInterface(dados) {
+    const corpoTabela = document.querySelector('#tabelaDespesas tbody');
+    corpoTabela.innerHTML = '';
+    let total = 0;
+    let resumoCategorias = {};
+
+    const listaOrdenada = [...dados].sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    listaOrdenada.forEach(d => {
+        let v = parseFloat(d.valor);
+        total += v;
+        resumoCategorias[d.categoria] = (resumoCategorias[d.categoria] || 0) + v;
+
+        const p = d.data.toString().split('T')[0].split('-');
+        const dataFormatada = p[2] + "/" + p[1];
+
+        let row = `<tr>
+            <td style="border: 1px solid #eee; padding: 8px;">${dataFormatada}</td>
+            <td style="border: 1px solid #eee; padding: 8px;">${d.categoria}</td>
+            <td style="border: 1px solid #eee; padding: 8px;">${d.descricao || '-'}</td>
+            <td style="border: 1px solid #eee; padding: 8px;">R$ ${v.toFixed(2)}</td>
+        </tr>`;
+        corpoTabela.innerHTML += row;
+    });
+
+    const corpoCategorias = document.querySelector('#tabelaCategorias tbody');
+    corpoCategorias.innerHTML = '';
+
+    Object.keys(resumoCategorias).forEach(cat => {
+    const valor = resumoCategorias[cat];
+
+    const row = `
+        <tr>
+            <td>${cat}</td>
+            <td>R$ ${valor.toFixed(2)}</td>
+        </tr>
+    `;
+
+    corpoCategorias.innerHTML += row;
+    });
+
+    document.getElementById('valorTotal').innerText = `Total: R$ ${total.toFixed(2)}`;
+    atualizarGrafico(resumoCategorias);
+}
+
+function atualizarGrafico(dados) {
+    const ctx = document.getElementById('meuGrafico').getContext('2d');
+    if (meuGrafico) meuGrafico.destroy();
+    meuGrafico = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(dados),
+            datasets: [{
+                data: Object.values(dados),
+                backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40']
+            }]
+        },
+        options: {
+            animation: false,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+function gerarPDF() {
+
+    const btn = document.querySelector('.btn-pdf');
+    btn.innerText = "A gerar imagem...";
+
+    const element = document.getElementById('area-report');
+
+    html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+    }).then(canvas => {
+
+        const link = document.createElement("a");
+        link.download = "Relatorio_Financas_Hedy.jpeg";
+        link.href = canvas.toDataURL("image/jpeg", 1.0);
+        link.click();
+
+        btn.innerText = "📥 Baixar Relatório PDF";
+    });
+}
+window.onload = () => {
+    const hoje = new Date();
+    const mesFormatado = hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, '0');
+    const filtro = document.getElementById('filtroMes');
+    if (filtro) filtro.value = mesFormatado;
+    carregarDados();
+};
+</script>
+
+</body>
+</html>
