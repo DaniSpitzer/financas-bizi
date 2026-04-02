@@ -31,10 +31,6 @@
         width: 100%;
         page-break-inside: avoid;
         }
-
-        #meuGrafico {
-          max-height: 220px;
-        }
     </style>
 </head>
 <body>
@@ -43,7 +39,7 @@
     <div id="area-registo">
         <h2>DAILY EXPENSES</h2>
         
-        <label>Configuração: Dia de Fecho do Cartão</label>
+        <label>Configuração: Credit Card Closing Date</label>
         <input type="number" id="diaFecho" value="28" min="1" max="31" style="background: #eef1f7;">
         
         <label>Data da Compra</label>
@@ -83,8 +79,6 @@
         <h3 id="titulo-report" style="text-align:center;"></h3>
 
         <div class="total" id="valorTotal">Total: R$ 0.00</div>
-
-        <canvas id="meuGrafico"></canvas>
     </div>
     <h3 style="margin-top:25px;">Total por categoria</h3>
     <table id="tabelaCategorias">
@@ -122,7 +116,6 @@
 <script>
 const APP_URL = "https://script.google.com/macros/s/AKfycbwu8BrZb72UVrCnBSARtPze90salLnEy7opND4SUWHiDxj75-XItcZEsD6SmQp8T-olHw/exec";
 let todasAsDespesas = [];
-let meuGrafico;
 
 async function carregarDados() {
     try {
@@ -256,28 +249,8 @@ function atualizarInterface(dados) {
     });
 
     document.getElementById('valorTotal').innerText = `Total: R$ ${total.toFixed(2)}`;
-    atualizarGrafico(resumoCategorias);
 }
-
-function atualizarGrafico(dados) {
-    const ctx = document.getElementById('meuGrafico').getContext('2d');
-    if (meuGrafico) meuGrafico.destroy();
-    meuGrafico = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(dados),
-            datasets: [{
-                data: Object.values(dados),
-                backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff', '#ff9f40']
-            }]
-        },
-        options: {
-            animation: false,
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
-}
-
+    
 function gerarPDF() {
 
     const btn = document.querySelector('.btn-pdf');
